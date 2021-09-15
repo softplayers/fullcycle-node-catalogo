@@ -1,4 +1,5 @@
 import {ApplicationConfig, FullcycleNodeCatalogoApplication} from './application';
+import './bootstrap';
 
 export * from './application';
 
