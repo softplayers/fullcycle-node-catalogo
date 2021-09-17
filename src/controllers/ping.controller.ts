@@ -71,11 +71,13 @@ export class PingController {
   @get('/categories')
   @response(200)
   async categories() {
-    /* await this.categoryRepository.create({
+    /**/
+    await this.categoryRepository.create({
       id: '1',
       name: "First category",
       description: 'description'
-    }); */
+    });
+    /**/
     return this.categoryRepository.find();
   }
 }
