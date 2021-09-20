@@ -55,6 +55,8 @@
     "@loopback/rest": "^10.0.0",
     "@loopback/rest-explorer": "^3.3.2",
     "@loopback/service-proxy": "^3.2.2",
+    "@types/amqplib": "^0.8.2",
+    "amqplib": "^0.8.0",
     "debug": "^4.3.2",
     "dotenv": "^10.0.0",
     "loopback-connector-esv6": "2.1.1",

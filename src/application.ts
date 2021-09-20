@@ -1,34 +1,36 @@
 import {BootMixin} from '@loopback/boot';
-import {ApplicationConfig} from '@loopback/core';
-import {
-  RestExplorerBindings,
-  RestExplorerComponent,
-} from '@loopback/rest-explorer';
+import {Application, ApplicationConfig} from '@loopback/core';
 import {RepositoryMixin} from '@loopback/repository';
-import {RestApplication} from '@loopback/rest';
+import {RestComponent, RestServer} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
+import {RabbitmqServer} from './servers';
 
 export {ApplicationConfig};
 
 export class FullcycleNodeCatalogoApplication extends BootMixin(
-  ServiceMixin(RepositoryMixin(RestApplication)),
+  ServiceMixin(RepositoryMixin(Application)),
 ) {
   constructor(options: ApplicationConfig = {}) {
     super(options);
 
     // Set up the custom sequence
-    this.sequence(MySequence);
+    options.rest.sequence = MySequence;
+
+    this.component(RestComponent);
 
     // Set up default home page
-    this.static('/', path.join(__dirname, '../public'));
+    const restServer = this.getSync<RestServer>('servers.RestServer');
+    restServer.static('/', path.join(__dirname, '../public'));
 
     // Customize @loopback/rest-explorer configuration here
+    /*
     this.configure(RestExplorerBindings.COMPONENT).to({
       path: '/explorer',
     });
     this.component(RestExplorerComponent);
+    */
 
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here
@@ -40,5 +42,7 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
         nested: true,
       },
     };
+
+    this.server(RabbitmqServer)
   }
 }

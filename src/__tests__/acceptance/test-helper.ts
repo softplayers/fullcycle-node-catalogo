@@ -1,9 +1,8 @@
-import {FullcycleNodeCatalogoApplication} from '../..';
 import {
-  createRestAppClient,
-  givenHttpServerConfig,
-  Client,
+  Client, createRestAppClient,
+  givenHttpServerConfig
 } from '@loopback/testlab';
+import {FullcycleNodeCatalogoApplication} from '../..';
 
 export async function setupApplication(): Promise<AppWithClient> {
   const restConfig = givenHttpServerConfig({
@@ -21,6 +20,7 @@ export async function setupApplication(): Promise<AppWithClient> {
   await app.boot();
   await app.start();
 
+  // @ts-ignore
   const client = createRestAppClient(app);
 
   return {app, client};
