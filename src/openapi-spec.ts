@@ -1,4 +1,5 @@
 import {ApplicationConfig} from '@loopback/core';
+import {RestServer} from '@loopback/rest';
 import {FullcycleNodeCatalogoApplication} from './application';
 
 /**
@@ -14,6 +15,8 @@ async function exportOpenApiSpec(): Promise<void> {
   const outFile = process.argv[2] ?? '';
   const app = new FullcycleNodeCatalogoApplication(config);
   await app.boot();
+  const restServer = app.getSync<RestServer>('servers.RestServer');
+  await restServer.exportOpenApiSpec(outFile);
   // await app.exportOpenApiSpec(outFile); // TODO compilation error
 }
 
