@@ -88,4 +88,4 @@ const meta = MetadataInspector.getClassMetadata<MyClassMetaData>(
   PingController
 )
 
-console.log(meta);
+console.log('[Meta]', meta);
