@@ -10,14 +10,38 @@ const config = {
   defaultSize: 50,
   configuration: {
     node: process.env.ELASTIC_SEARCH_HOST,
-    requestTimeout: process.env.ELASTIC_SEARCH_REQUEST_TIMEOUT,
-    pingTimeout: process.env.ELASTIC_SEARCH_PING_TIMEOUT,
+    requestTimeout: parseInt(process.env.ELASTIC_SEARCH_REQUEST_TIMEOUT as string),
+    pingTimeout: parseInt(process.env.ELASTIC_SEARCH_PING_TIMEOUT as string),
   },
-  mappingProperties: {}
+  mappingProperties: {
+    "docType": {
+      "type": "keyword"
+    },
+    "id": {
+      "type": "keyword"
+    },
+    "name": {
+      "type": "text",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    },
+    "created_at": {
+      "type": "date"
+    },
+    "updated_at": {
+      "type": "date"
+    },
+    "is_active": {
+      "type": "boolean"
+    }
+  }
 };
 
-
-console.log('ENV', process.env.ELASTIC_SEARCH_HOST)
+//console.log('ENV', process.env.ELASTIC_SEARCH_HOST)
 
 // Observe application's life cycle to disconnect the datasource when
 // application is stopped. This allows the application to be shut down
