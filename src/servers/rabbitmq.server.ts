@@ -8,7 +8,7 @@ export class RabbitmqServer extends Context implements Server {
 
   async start(): Promise<void> {
     this.conn = await connect({
-      hostname: 'localhost', // rabbitmq
+      hostname: 'rabbitmq', // rabbitmq
       username: 'rabbitmq',
       password: 'rabbitmq'
     })
