@@ -6,12 +6,12 @@ const config = {
   connector: 'esv6',
   index: 'catalog',
   version: 7,
-  debug: process.env.APP_ENV === 'dev',
+  debug: 'dev', // process.env.APP_ENV === 'dev',
   defaultSize: 50,
   configuration: {
-    node: process.env.ELASTIC_SEARCH_HOST,
-    requestTimeout: parseInt(process.env.ELASTIC_SEARCH_REQUEST_TIMEOUT as string),
-    pingTimeout: parseInt(process.env.ELASTIC_SEARCH_PING_TIMEOUT as string),
+    node: 'http://localhost:9200', //process.env.ELASTIC_SEARCH_HOST,
+    requestTimeout: 30000, //parseInt(process.env.ELASTIC_SEARCH_REQUEST_TIMEOUT as string),
+    pingTimeout: 3000, // parseInt(process.env.ELASTIC_SEARCH_PING_TIMEOUT as string),
   },
   mappingProperties: {
     "docType": {
@@ -41,7 +41,7 @@ const config = {
   }
 };
 
-//console.log('ENV', process.env.ELASTIC_SEARCH_HOST)
+console.log('ENV::ELASTIC_SEARCH_HOST=', process.env.ELASTIC_SEARCH_HOST)
 
 // Observe application's life cycle to disconnect the datasource when
 // application is stopped. This allows the application to be shut down

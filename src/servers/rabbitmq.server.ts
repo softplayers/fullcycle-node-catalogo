@@ -1,6 +1,7 @@
 import {Context, Server} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {Channel, connect, Connection, Replies} from 'amqplib';
+import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
 
 
@@ -10,7 +11,6 @@ export class RabbitmqServer extends Context implements Server {
 
   constructor(@repository(CategoryRepository) private categoryRepo: CategoryRepository) {
     super();
-    console.log('[Constr]', this.categoryRepo);
   }
 
   async start(): Promise<void> {
@@ -32,17 +32,28 @@ export class RabbitmqServer extends Context implements Server {
 
     await channel.bindQueue(queue.queue, exchange.exchange, 'model.*.*');
 
-    //const result = channel.sendToQueue(QUEUE, Buffer.from('hello world'));
-    channel.publish('amq.direct', 'my-routing-key', Buffer.from('hello world -> routing key'));
-
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     channel.consume(queue.queue, (message) => {
       if (!message) return;
-      console.log("[MESSAGE]", JSON.parse(message.content.toString()));
-
+      const data = JSON.parse(message.content.toString());
       const [model, event] = message.fields.routingKey.split('.').slice(1);
-      console.log("[META] model:", model, "/ event:", event)
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.sync({model, event, data});
     });
+  }
+
+  async sync({model, event, data}: {model: string, event: string, data: Category}) {
+    if (model === 'category') {
+      switch (event) {
+        case 'created':
+          await this.categoryRepo.create({
+            ...data,
+            created_at: new Date(),
+            updated_at: new Date(),
+          });
+          break;
+      }
+    }
   }
 
   async stop(): Promise<void> {
