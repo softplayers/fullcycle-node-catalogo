@@ -31,6 +31,9 @@ const config = {
         }
       }
     },
+    "description": {
+      "type": "text",
+    },
     "created_at": {
       "type": "date"
     },

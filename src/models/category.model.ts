@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import {Entity, model, property} from '@loopback/repository';
 
 @model({settings: {strict: false}})
@@ -17,10 +18,18 @@ export class Category extends Entity {
   name: string;
 
   @property({
-    type: 'boolean',
-    required: false
+    type: 'string',
+    required: false,
+    default: '',
   })
-  is_active: boolean = true;
+  description: string;
+
+  @property({
+    type: 'boolean',
+    required: false,
+    default: true,
+  })
+  is_active: boolean;
 
   @property({
     type: 'date',
