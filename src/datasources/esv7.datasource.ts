@@ -9,7 +9,9 @@ const config = {
   debug: 'dev', // process.env.APP_ENV === 'dev',
   defaultSize: 50,
   configuration: {
-    node: 'http://localhost:9200', //process.env.ELASTIC_SEARCH_HOST,
+    node: 'http://elasticsearch:9200',
+    // node: 'http://localhost:9200',
+    // node: process.env.ELASTIC_SEARCH_HOST,
     requestTimeout: 30000, //parseInt(process.env.ELASTIC_SEARCH_REQUEST_TIMEOUT as string),
     pingTimeout: 3000, // parseInt(process.env.ELASTIC_SEARCH_PING_TIMEOUT as string),
   },

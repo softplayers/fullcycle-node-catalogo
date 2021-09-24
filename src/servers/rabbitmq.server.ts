@@ -4,10 +4,30 @@ import {Channel, connect, Connection, Replies} from 'amqplib';
 import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
 
+/**
+ * Category message sample
+ *
+Routing Key
+// Create
+model.category.created
+{
+  "id": "123",
+  "name": "nova categoria"
+}
 
+// Update
+model.category.updated
+{
+  "id": "123",
+  "name": "Atualizada",
+  "created_at": "2021-09-24T00:00:00",
+  "updated_at": "2021-09-24T00:00:00"
+}
+ */
 export class RabbitmqServer extends Context implements Server {
   private _listening: boolean;
   conn: Connection;
+  channel: Channel;
 
   constructor(@repository(CategoryRepository) private categoryRepo: CategoryRepository) {
     super();
@@ -26,19 +46,22 @@ export class RabbitmqServer extends Context implements Server {
 
   async boot() {
     const QUEUE = 'micro-catalog/sync-videos';
-    const channel: Channel = await this.conn.createChannel();
-    const queue: Replies.AssertQueue = await channel.assertQueue(QUEUE);
-    const exchange: Replies.AssertExchange = await channel.assertExchange('amq.topic', 'topic');
+    this.channel = await this.conn.createChannel();
+    const queue: Replies.AssertQueue = await this.channel.assertQueue(QUEUE);
+    const exchange: Replies.AssertExchange = await this.channel.assertExchange('amq.topic', 'topic');
 
-    await channel.bindQueue(queue.queue, exchange.exchange, 'model.*.*');
+    await this.channel.bindQueue(queue.queue, exchange.exchange, 'model.*.*');
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    channel.consume(queue.queue, (message) => {
+    this.channel.consume(queue.queue, (message) => {
       if (!message) return;
+      console.log(message.content.toString());
       const data = JSON.parse(message.content.toString());
       const [model, event] = message.fields.routingKey.split('.').slice(1);
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.sync({model, event, data});
+      this.sync({model, event, data})
+        .then(() => this.channel.ack(message))
+        .catch(() => this.channel.reject(message, false));
     });
   }
 
@@ -48,9 +71,15 @@ export class RabbitmqServer extends Context implements Server {
         case 'created':
           await this.categoryRepo.create({
             ...data,
-            created_at: new Date(),
-            updated_at: new Date(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           });
+          break;
+        case 'updated':
+          await this.categoryRepo.updateById(data.id, data);
+          break;
+        case 'deleted':
+          await this.categoryRepo.deleteById(data.id);
           break;
       }
     }
