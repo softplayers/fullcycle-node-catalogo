@@ -1,7 +1,7 @@
 import {Context, inject, Server} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {AmqpConnectionManager, AmqpConnectionManagerOptions, ChannelWrapper, connect} from 'amqp-connection-manager';
-import {Channel} from 'amqplib';
+import {Channel, ConfirmChannel, Options} from 'amqplib';
 import {RabbitmqBindings} from '../keys';
 import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
@@ -27,9 +27,14 @@ model.category.updated
 }
  */
 
+export interface Exchange {
+  name: string; type: string; options?: Options.AssertExchange
+}
+
 export interface RabbitmqConfig {
-  uri: string,
-  connOptions?: AmqpConnectionManagerOptions,
+  uri: string;
+  connOptions?: AmqpConnectionManagerOptions;
+  exchanges?: Exchange[]
 }
 
 export class RabbitmqServer extends Context implements Server {
@@ -56,7 +61,22 @@ export class RabbitmqServer extends Context implements Server {
       this._listening = false;
       console.log(`Failed to setup a RabbitMQ channel - name: {name}`);
     })
+    await this.setupExchanges();
     // this.boot();
+  }
+
+  private async setupExchanges() {
+    const {exchanges} = this.config;
+
+    return this.channelManager.addSetup(async (channel: ConfirmChannel) => {
+      if (!exchanges) {
+        return;
+      }
+
+      Promise.all(exchanges.map((exchange) =>
+        channel.assertExchange(exchange.name, exchange.type, exchange.options)
+      ))
+    });
   }
 
   async boot() {
@@ -113,6 +133,10 @@ export class RabbitmqServer extends Context implements Server {
 
   get conn(): AmqpConnectionManager {
     return this._conn;
+  }
+
+  get channelManager(): ChannelWrapper {
+    return this._channelManager;
   }
 
 }
