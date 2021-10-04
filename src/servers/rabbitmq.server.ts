@@ -1,7 +1,9 @@
-import {Context, inject, Server} from '@loopback/core';
+import {Application, Binding, Context, CoreBindings, inject, Server} from '@loopback/core';
+import {MetadataInspector} from '@loopback/metadata';
 import {repository} from '@loopback/repository';
 import {AmqpConnectionManager, AmqpConnectionManagerOptions, ChannelWrapper, connect} from 'amqp-connection-manager';
 import {Channel, ConfirmChannel, Options} from 'amqplib';
+import {RabbitmqSubscribeMetadata, RABBITMQ_SUBSCRIBE_DECORATOR} from '../decorators/rabbitmq-subscribe.decorator';
 import {RabbitmqBindings} from '../keys';
 import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
@@ -44,9 +46,10 @@ export class RabbitmqServer extends Context implements Server {
   channel: Channel;
 
   constructor(
+    @inject(CoreBindings.APPLICATION_INSTANCE) public app: Application,
     @repository(CategoryRepository) private categoryRepo: CategoryRepository,
     @inject(RabbitmqBindings.CONFIG) private config: RabbitmqConfig) {
-    super();
+    super(app);
     console.log('[config]', config);
   }
 
@@ -62,6 +65,14 @@ export class RabbitmqServer extends Context implements Server {
       console.log(`Failed to setup a RabbitMQ channel - name: {name}`);
     })
     await this.setupExchanges();
+
+    const subscribers = this.getSubscribers();
+    console.log('[subscribers]', subscribers);
+    // @ts-ignore
+    console.log('[invoke0]', subscribers[0][0]['method']());
+    // @ts-ignore
+    console.log('[invoke1]', subscribers[0][1]['method']());
+
     // this.boot();
   }
 
@@ -79,6 +90,35 @@ export class RabbitmqServer extends Context implements Server {
     });
   }
 
+  private getSubscribers() {
+    const bindings: Array<Readonly<Binding>> = this.find('services.*');
+
+
+    return bindings.map(binding => {
+      const serviceProto = binding.valueConstructor?.prototype;
+      const metadata = MetadataInspector.getAllMethodMetadata<RabbitmqSubscribeMetadata>(RABBITMQ_SUBSCRIBE_DECORATOR, serviceProto);
+      console.log('[Metadata]', metadata)
+      if (!metadata) {
+        return [];
+      }
+      const methods = [];
+      for (const methodName in metadata) {
+          if (!Object.prototype.hasOwnProperty.call(metadata, methodName)) {
+            return;
+          }
+
+          const service = this.getSync(binding.key) as any;
+
+          methods.push({
+            method: service[methodName].bind(service),
+            metadata: metadata[methodName]
+          })
+      }
+
+      return methods;
+    });
+  }
+
   async boot() {
     /** /
     const QUEUE = 'micro-catalog/sync-videos';
@@ -88,13 +128,11 @@ export class RabbitmqServer extends Context implements Server {
 
     await this.channel.bindQueue(queue.queue, exchange.exchange, 'model.*.*');
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.channel.consume(queue.queue, (message) => {
       if (!message) return;
       console.log(message.content.toString());
       const data = JSON.parse(message.content.toString());
       const [model, event] = message.fields.routingKey.split('.').slice(1);
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.sync({model, event, data})
         .then(() => this.channel.ack(message))
         .catch(() => this.channel.reject(message, false));
