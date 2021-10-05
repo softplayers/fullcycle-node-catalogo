@@ -16,7 +16,7 @@ export class CategorySyncService {
   })
 
   handler({data}: {data: any}) {
-    console.log('[Handler]', this.categoryRepo.entityClass, data);
+    console.log('[Category::Handler]', data);
   }
 
   @rabbitmqSubscribe({
@@ -25,6 +25,37 @@ export class CategorySyncService {
     routingKey: 'model.category1.*'
   })
   handler1({data}: {data: any}) {
-    console.log('[Handler1]', this.categoryRepo.entityClass, data);
+    console.log('[Category::Handler1]', data);
   }
+
+  @rabbitmqSubscribe({
+    exchange: 'amq.topic',
+    routingKey: 'model.category.created',
+    queue: 'category-created',
+  })
+  async created({data}: {data: any}) {
+    console.log('[Category::Created]', data);
+    return this.categoryRepo.create(data);
+  }
+
+  @rabbitmqSubscribe({
+    exchange: 'amq.topic',
+    routingKey: 'model.category.updated',
+    queue: 'category-updated',
+  })
+  async updated({data}: {data: any}) {
+    console.log('[Category::Updated]', data);
+    return this.categoryRepo.updateById(data.id, data);
+  }
+
+  @rabbitmqSubscribe({
+    exchange: 'amq.topic',
+    routingKey: 'model.category.deleted',
+    queue: 'category-deleted',
+  })
+  async deleted({data}: {data: any}) {
+    console.log('[Category::Deleted]', data);
+    return this.categoryRepo.deleteById(data.id);
+  }
+
 }

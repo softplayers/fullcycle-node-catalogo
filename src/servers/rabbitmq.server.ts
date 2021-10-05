@@ -47,8 +47,8 @@ export class RabbitmqServer extends Context implements Server {
 
   constructor(
     @inject(CoreBindings.APPLICATION_INSTANCE) public app: Application,
-    @repository(CategoryRepository) private categoryRepo: CategoryRepository,
-    @inject(RabbitmqBindings.CONFIG) private config: RabbitmqConfig) {
+    @inject(RabbitmqBindings.CONFIG) private config: RabbitmqConfig,
+    @repository(CategoryRepository) private categoryRepo: CategoryRepository) {
     super(app);
     console.log('[config]', config);
   }
