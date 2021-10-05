@@ -7,15 +7,16 @@ import {CategoryRepository} from '../repositories';
 export class CategorySyncService {
   constructor(
     @repository(CategoryRepository) private categoryRepo: CategoryRepository,
-  ) {}
+  ) { }
 
   @rabbitmqSubscribe({
     exchange: 'amq.topic',
     queue: 'x',
     routingKey: 'model.category.*'
   })
-  handler() {
-    console.log('[Handler]', this.categoryRepo.entityClass);
+
+  handler({data}: {data: any}) {
+    console.log('[Handler]', this.categoryRepo.entityClass, data);
   }
 
   @rabbitmqSubscribe({
@@ -23,7 +24,7 @@ export class CategorySyncService {
     queue: 'x1',
     routingKey: 'model.category1.*'
   })
-  handler1() {
-    console.log('[Handler1]', this.categoryRepo.entityClass);
+  handler1({data}: {data: any}) {
+    console.log('[Handler1]', this.categoryRepo.entityClass, data);
   }
 }

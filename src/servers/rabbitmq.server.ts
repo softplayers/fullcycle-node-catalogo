@@ -65,15 +65,7 @@ export class RabbitmqServer extends Context implements Server {
       console.log(`Failed to setup a RabbitMQ channel - name: {name}`);
     })
     await this.setupExchanges();
-
-    const subscribers = this.getSubscribers();
-    console.log('[subscribers]', subscribers);
-    // @ts-ignore
-    console.log('[invoke0]', subscribers[0][0]['method']());
-    // @ts-ignore
-    console.log('[invoke1]', subscribers[0][1]['method']());
-
-    // this.boot();
+    await this.bindSubscribers();
   }
 
   private async setupExchanges() {
@@ -90,9 +82,35 @@ export class RabbitmqServer extends Context implements Server {
     });
   }
 
-  private getSubscribers() {
-    const bindings: Array<Readonly<Binding>> = this.find('services.*');
+  private async bindSubscribers() {
+    this
+      .getSubscribers()
+      .map(async (item) => {
+        await this.channelManager.addSetup(async (channel: ConfirmChannel) => {
+          const {exchange, queue, routingKey, queueOptions} = item.metadata;
+          const assertQueue = await channel.assertQueue(
+            queue ?? '',
+            queueOptions ?? undefined
+          );
 
+          const routingKeys = Array.isArray(routingKey) ? routingKey : [routingKey];
+
+          await Promise.all(
+            routingKeys.map(x => channel.bindQueue(assertQueue.queue, exchange, x))
+          );
+
+          await this.consume({
+            channel,
+            queue: assertQueue.queue,
+            method: item.method
+          });
+
+        })
+      })
+  }
+
+  private getSubscribers(): {method: Function, metadata: RabbitmqSubscribeMetadata}[] {
+    const bindings: Array<Readonly<Binding>> = this.find('services.*');
 
     return bindings.map(binding => {
       const serviceProto = binding.valueConstructor?.prototype;
@@ -103,42 +121,52 @@ export class RabbitmqServer extends Context implements Server {
       }
       const methods = [];
       for (const methodName in metadata) {
-          if (!Object.prototype.hasOwnProperty.call(metadata, methodName)) {
-            return;
-          }
+        if (!Object.prototype.hasOwnProperty.call(metadata, methodName)) {
+          return;
+        }
 
-          const service = this.getSync(binding.key) as any;
+        const service = this.getSync(binding.key) as any;
 
-          methods.push({
-            method: service[methodName].bind(service),
-            metadata: metadata[methodName]
-          })
+        methods.push({
+          method: service[methodName].bind(service),
+          metadata: metadata[methodName]
+        })
       }
 
       return methods;
+    })
+      .reduce((collection: any, item: any) => {
+        collection.push(...item);
+        return collection;
+      }, []);
+  }
+
+  private async consume({channel, queue, method}: {channel: ConfirmChannel, queue: string, method: Function}) {
+    await channel.consume(queue, async message => {
+      try {
+        if (!message) {
+          throw new Error("Recived null message");
+        }
+
+        const {content} = message;
+
+        if (content) {
+          let data;
+          try {
+            data = JSON.parse(content.toString());
+          } catch (error) {
+            data = null;
+          }
+          console.log(data);
+          await method({data, message, channel});
+        }
+      } catch (error) {
+        console.error(error);
+        // politica de resposta
+      }
     });
   }
 
-  async boot() {
-    /** /
-    const QUEUE = 'micro-catalog/sync-videos';
-    this.channel = await this._conn.createChannel();
-    const queue: Replies.AssertQueue = await this.channel.assertQueue(QUEUE);
-    const exchange: Replies.AssertExchange = await this.channel.assertExchange('amq.topic', 'topic');
-
-    await this.channel.bindQueue(queue.queue, exchange.exchange, 'model.*.*');
-
-    this.channel.consume(queue.queue, (message) => {
-      if (!message) return;
-      console.log(message.content.toString());
-      const data = JSON.parse(message.content.toString());
-      const [model, event] = message.fields.routingKey.split('.').slice(1);
-      this.sync({model, event, data})
-        .then(() => this.channel.ack(message))
-        .catch(() => this.channel.reject(message, false));
-    });
-    /**/
-  }
 
   async sync({model, event, data}: {model: string, event: string, data: Category}) {
     if (model === 'category') {
