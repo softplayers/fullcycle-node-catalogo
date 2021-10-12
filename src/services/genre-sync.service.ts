@@ -1,49 +1,28 @@
 import {BindingScope, injectable} from '@loopback/core';
 import {repository} from '@loopback/repository';
+import {Message} from 'amqplib';
 import {rabbitmqSubscribe} from '../decorators/rabbitmq-subscribe.decorator';
 import {GenreRepository} from '../repositories';
+import {BaseSycSyncService} from './base-model-sync.service';
 
-@injectable({scope: BindingScope.TRANSIENT})
-export class GenreSyncService {
+@injectable({scope: BindingScope.SINGLETON})
+export class GenreSyncService extends BaseSycSyncService {
   constructor(
     @repository(GenreRepository) private genreRepo: GenreRepository,
-  ) { }
+  ) {
+    super();
+  }
 
   @rabbitmqSubscribe({
     exchange: 'amq.topic',
     routingKey: 'model.genre.*',
-    queue: 'genre',
+    queue: 'micro-catalog/sync-videos/genre',
   })
-  logger({data}: {data: any}) {
-    console.log('[Genre::Log]', data);
+  async handler({data, message}: {data: any, message: Message}) {
+    this.sync({
+      repo: this.genreRepo,
+      data,
+      message
+    })
   }
-
-  @rabbitmqSubscribe({
-    exchange: 'amq.topic',
-    routingKey: 'model.genre.created',
-    queue: 'genre-created',
-  })
-  async created({data}: {data: any}) {
-    return this.genreRepo.create(data);
-  }
-
-  @rabbitmqSubscribe({
-    exchange: 'amq.topic',
-    routingKey: 'model.genre.updated',
-    queue: 'genre-updated',
-  })
-  async updated({data}: {data: any}) {
-    return this.genreRepo.updateById(data.id, data);
-  }
-
-  @rabbitmqSubscribe({
-    exchange: 'amq.topic',
-    routingKey: 'model.genre.deleted',
-    queue: 'genre-deleted',
-  })
-  async deleted({data}: {data: any}) {
-    return this.genreRepo.deleteById(data.id);
-  }
-
-
 }

@@ -1,61 +1,30 @@
 import {BindingScope, injectable} from '@loopback/core';
 import {repository} from '@loopback/repository';
+import {Message} from 'amqplib';
 import {rabbitmqSubscribe} from '../decorators/rabbitmq-subscribe.decorator';
 import {CategoryRepository} from '../repositories';
+import {BaseSycSyncService} from './base-model-sync.service';
 
-@injectable({scope: BindingScope.TRANSIENT})
-export class CategorySyncService {
+@injectable({scope: BindingScope.SINGLETON})
+export class CategorySyncService extends BaseSycSyncService {
+
   constructor(
     @repository(CategoryRepository) private categoryRepo: CategoryRepository,
-  ) { }
+  ) {
+    super();
+  }
+
 
   @rabbitmqSubscribe({
     exchange: 'amq.topic',
-    queue: 'x',
-    routingKey: 'model.category.*'
+    routingKey: 'model.category.*',
+    queue: 'micro-catalog/sync-videos/category',
   })
-
-  handler({data}: {data: any}) {
-    console.log('[Category::Handler]', data);
+  async handler({data, message}: {data: any, message: Message}) {
+    this.sync({
+      repo: this.categoryRepo,
+      data,
+      message
+    })
   }
-
-  @rabbitmqSubscribe({
-    exchange: 'amq.topic',
-    queue: 'x1',
-    routingKey: 'model.category1.*'
-  })
-  handler1({data}: {data: any}) {
-    console.log('[Category::Handler1]', data);
-  }
-
-  @rabbitmqSubscribe({
-    exchange: 'amq.topic',
-    routingKey: 'model.category.created',
-    queue: 'category-created',
-  })
-  async created({data}: {data: any}) {
-    console.log('[Category::Created]', data);
-    return this.categoryRepo.create(data);
-  }
-
-  @rabbitmqSubscribe({
-    exchange: 'amq.topic',
-    routingKey: 'model.category.updated',
-    queue: 'category-updated',
-  })
-  async updated({data}: {data: any}) {
-    console.log('[Category::Updated]', data);
-    return this.categoryRepo.updateById(data.id, data);
-  }
-
-  @rabbitmqSubscribe({
-    exchange: 'amq.topic',
-    routingKey: 'model.category.deleted',
-    queue: 'category-deleted',
-  })
-  async deleted({data}: {data: any}) {
-    console.log('[Category::Deleted]', data);
-    return this.categoryRepo.deleteById(data.id);
-  }
-
 }
