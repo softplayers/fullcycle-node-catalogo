@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import {Application, Binding, Context, CoreBindings, inject, Server} from '@loopback/core';
 import {MetadataInspector} from '@loopback/metadata';
 import {repository} from '@loopback/repository';
 import {AmqpConnectionManager, AmqpConnectionManagerOptions, ChannelWrapper, connect} from 'amqp-connection-manager';
-import {Channel, ConfirmChannel, Options} from 'amqplib';
+import {Channel, ConfirmChannel, Message, Options} from 'amqplib';
 import {RabbitmqSubscribeMetadata, RABBITMQ_SUBSCRIBE_DECORATOR} from '../decorators/rabbitmq-subscribe.decorator';
 import {RabbitmqBindings} from '../keys';
 import {Category} from '../models';
@@ -29,6 +30,12 @@ model.category.updated
 }
  */
 
+export enum ResponseEnum {
+  ACK,
+  REQUEUE,
+  NACK,
+}
+
 export interface Exchange {
   name: string; type: string; options?: Options.AssertExchange
 }
@@ -36,7 +43,8 @@ export interface Exchange {
 export interface RabbitmqConfig {
   uri: string;
   connOptions?: AmqpConnectionManagerOptions;
-  exchanges?: Exchange[]
+  exchanges?: Exchange[];
+  defaultHandleError?: ResponseEnum;
 }
 
 export class RabbitmqServer extends Context implements Server {
@@ -157,16 +165,34 @@ export class RabbitmqServer extends Context implements Server {
           } catch (error) {
             data = null;
           }
-          console.log(data);
-          await method({data, message, channel});
+          console.log('[consume]', data);
+
+          const responseType = await method({data, message, channel});
+          this.dispatchResponse(channel, message, responseType);
         }
       } catch (error) {
         console.error(error);
-        // politica de resposta
+        if (!message) {
+          return;
+        }
+        this.dispatchResponse(channel, message, this.config?.defaultHandleError);
       }
     });
   }
 
+  private dispatchResponse(channel: Channel, message: Message, responseType?: ResponseEnum) {
+    switch(responseType) {
+      case ResponseEnum.REQUEUE:
+        channel.nack(message, false, true);
+        break;
+      case ResponseEnum.NACK:
+        channel.nack(message, false, false);
+        break;
+      case ResponseEnum.ACK:
+      default:
+        channel.ack(message);
+    }
+  }
 
   async sync({model, event, data}: {model: string, event: string, data: Category}) {
     if (model === 'category') {

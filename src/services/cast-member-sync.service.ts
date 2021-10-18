@@ -20,7 +20,7 @@ export class CastMemberSyncService extends BaseSycSyncService {
     queue: 'micro-catalog/sync-videos/cast-member',
   })
   async handler({data, message}: {data: any, message: Message}) {
-    this.sync({
+    await this.sync({
       repo: this.castMemberRepo,
       data,
       message

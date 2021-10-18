@@ -19,7 +19,7 @@ export class GenreSyncService extends BaseSycSyncService {
     queue: 'micro-catalog/sync-videos/genre',
   })
   async handler({data, message}: {data: any, message: Message}) {
-    this.sync({
+    await this.sync({
       repo: this.genreRepo,
       data,
       message

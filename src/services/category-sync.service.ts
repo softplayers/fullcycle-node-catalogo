@@ -21,7 +21,7 @@ export class CategorySyncService extends BaseSycSyncService {
     queue: 'micro-catalog/sync-videos/category',
   })
   async handler({data, message}: {data: any, message: Message}) {
-    this.sync({
+    await this.sync({
       repo: this.categoryRepo,
       data,
       message
