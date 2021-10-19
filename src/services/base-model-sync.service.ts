@@ -17,7 +17,7 @@ export class BaseSycSyncService {
         await repo.create(entity);
         break;
       case 'updated':
-        await repo.updateById(data.id, entity);
+        await this.updateOrCreate({repo, id: data.id, entity});
         break;
       case 'deleted':
         await repo.deleteById(data.id);
@@ -37,8 +37,13 @@ export class BaseSycSyncService {
       if (data.hasOwnProperty(key)) {
         acc[key] = data[key];
       }
+
       return acc;
     }, {} as any);
+  }
+
+  protected async updateOrCreate({repo, id, entity}: {repo: DefaultCrudRepository<any, any>, id: string, entity: any}) {
+    return await repo.exists(id) ? repo.updateById(id, entity) : repo.create(entity)
   }
 
 }
