@@ -55,6 +55,7 @@ console.log('ENV::ELASTIC_SEARCH_HOST=', process.env.ELASTIC_SEARCH_HOST)
 @lifeCycleObserver('datasource')
 export class Esv7DataSource extends juggler.DataSource
   implements LifeCycleObserver {
+  [x: string]: any;
   static dataSourceName = 'esv7';
   static readonly defaultConfig = config;
 

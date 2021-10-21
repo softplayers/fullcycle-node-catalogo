@@ -6,8 +6,10 @@ import {RestExplorerBindings} from '@loopback/rest-explorer';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {RestExplorerComponent} from './components';
+import {Category} from './models';
 import {MySequence} from './sequence';
 import {RabbitmqServer} from './servers';
+import {ValidatorService} from './services/validator.service';
 
 export {ApplicationConfig};
 
@@ -46,5 +48,15 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
     };
 
     this.server(RabbitmqServer)
+  }
+
+  async boot() {
+    await super.boot();
+    const validator = this.getSync<ValidatorService>('services.ValidatorService');
+    try {
+      await validator.validate({data: {}, entityClass: Category});
+    } catch (error) {
+      console.dir(error, {depth: 8})
+    }
   }
 }
