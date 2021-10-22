@@ -127,7 +127,7 @@ export class RabbitmqServer extends Context implements Server {
       if (!metadata) {
         return [];
       }
-      const methods = [];
+      const methods: any[] = [];
       for (const methodName in metadata) {
         if (!Object.prototype.hasOwnProperty.call(metadata, methodName)) {
           return;

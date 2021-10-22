@@ -5,7 +5,7 @@ import {RestComponent, RestServer} from '@loopback/rest';
 import {RestExplorerBindings} from '@loopback/rest-explorer';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
-import {RestExplorerComponent} from './components';
+import {RestExplorerComponent, ValidatorsComponent} from './components';
 import {Category} from './models';
 import {MySequence} from './sequence';
 import {RabbitmqServer} from './servers';
@@ -35,6 +35,8 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
     });
     this.component(RestExplorerComponent);
 
+    this.component(ValidatorsComponent);
+
 
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here
@@ -58,5 +60,13 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
     } catch (error) {
       console.dir(error, {depth: 8})
     }
+
+    /*
+    try {
+      await validator.validate({data: {}, entityClass: Genre});
+    } catch (error) {
+      console.dir(error, {depth: 8})
+    }
+    */
   }
 }
