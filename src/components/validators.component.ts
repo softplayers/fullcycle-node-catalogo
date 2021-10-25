@@ -1,6 +1,6 @@
 import {Binding, Component, CoreBindings, inject} from '@loopback/core';
 import {DefaultCrudRepository} from '@loopback/repository';
-import {RestTags} from '@loopback/rest';
+import {AjvKeyword, RestTags} from '@loopback/rest';
 import {ApplicationWithServices} from '@loopback/service-proxy';
 import Ajv, {ErrorObject} from 'ajv';
 
@@ -17,13 +17,13 @@ export class ValidatorsComponent implements Component {
   validators() {
     return [
       Binding
-        .bind('ajv.keywords.exists')
+        .bind<AjvKeyword>('ajv.keywords.exists')
         .to({
-          name: 'exists',
+          keyword: 'exists',
           async: true,
           validate: async ([model, field], value) => {
             const values = Array.isArray(value) ? value : [value];
-            const repository = this.app.getSync<DefaultCrudRepository<any,any>>(`repositories.${model}Repository`);
+            const repository = this.app.getSync<DefaultCrudRepository<any, any>>(`repositories.${model}Repository`);
             const rows = await repository.find({
               where: {
                 or: values.map(v => ({[field]: v}))
