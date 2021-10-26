@@ -55,6 +55,7 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
   async boot() {
     await super.boot();
     return;
+
     const validator = this.getSync<ValidatorService>('services.ValidatorService');
     try {
       await validator.validate({data: {id: '2-cat2'}, entityClass: Category});

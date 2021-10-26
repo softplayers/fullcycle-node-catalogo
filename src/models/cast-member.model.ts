@@ -1,5 +1,10 @@
 import {Entity, model, property} from '@loopback/repository';
 
+export enum CastMemberType {
+  DIRECTOR = 1,
+  ACTOR = 2,
+}
+
 @model({settings: {strict: false}})
 export class CastMember extends Entity {
 
@@ -14,12 +19,19 @@ export class CastMember extends Entity {
   @property({
     type: 'string',
     required: true,
+    jsonSchema: {
+      minLength: 1,
+      maxLength: 255,
+    }
   })
   name: string;
 
   @property({
     type: 'integer',
     required: true,
+    jsonSchema: {
+      enum: [CastMemberType.DIRECTOR, CastMemberType.ACTOR]
+    }
   })
   type: number;
 
