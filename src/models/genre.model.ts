@@ -1,4 +1,6 @@
+import {getModelSchemaRef} from '@loopback/openapi-v3';
 import {Entity, model, property} from '@loopback/repository';
+import {SmallCategory} from '.';
 
 @model({settings: {strict: false}})
 export class Genre extends Entity {
@@ -41,6 +43,23 @@ export class Genre extends Entity {
   // Indexer property to allow additional data
   [prop: string]: any;
 
+  @property({
+    type: 'object',
+    jsonSchema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: {type: 'string'},
+          name: {type: 'string'},
+          is_active: {type: 'boolean'},
+        }
+      },
+      uniqueItems: true
+    }
+  })
+  categories: SmallCategory;
+
   constructor(data?: Partial<Genre>) {
     super(data);
   }
@@ -51,3 +70,6 @@ export interface GenreRelations {
 }
 
 export type GenreWithRelations = Genre & GenreRelations;
+console.log('#####################################');
+console.dir(getModelSchemaRef(Genre), {depth: 8});
+console.log('#####################################');
