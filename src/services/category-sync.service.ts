@@ -1,17 +1,19 @@
-import {BindingScope, injectable} from '@loopback/core';
+import {BindingScope, injectable, service} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {Message} from 'amqplib';
 import {rabbitmqSubscribe} from '../decorators/rabbitmq-subscribe.decorator';
 import {CategoryRepository} from '../repositories';
 import {BaseSycSyncService} from './base-model-sync.service';
+import {ValidatorService} from './validator.service';
 
 @injectable({scope: BindingScope.SINGLETON})
 export class CategorySyncService extends BaseSycSyncService {
 
   constructor(
     @repository(CategoryRepository) private categoryRepo: CategoryRepository,
+    @service(ValidatorService) private validator: ValidatorService,
   ) {
-    super();
+    super(validator);
   }
 
 

@@ -32,7 +32,7 @@ export class ValidatorsComponent implements Component {
             if (rows.length !== values.length) {
               const rowsValues = rows.map(r => r[field]);
               const valuesNotExists = values.filter(v => !rowsValues.includes(v));
-              const errors = valuesNotExists.map(v => ({message: `The value ${v} for ${model} not existst`} as ErrorObject))
+              const errors = valuesNotExists.map(v => ({message: `The value ${v} for ${model} not exists`} as ErrorObject))
               throw new Ajv.ValidationError(errors);
             }
             return true;

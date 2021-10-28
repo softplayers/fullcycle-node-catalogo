@@ -1,12 +1,18 @@
 import {DefaultCrudRepository} from '@loopback/repository';
 import {Message} from 'amqplib';
+import {ValidatorService} from './validator.service';
 
 interface SyncOptions {
   repo: DefaultCrudRepository<any, any>;
   data: any;
   message: Message
 }
-export class BaseSycSyncService {
+export abstract class BaseSycSyncService {
+
+  constructor(public validatorService: ValidatorService) {
+
+  }
+
   protected async sync({repo, data, message}: SyncOptions) {
     const action = this.getAction(message);
     const entity = this.createEntity(data, repo);
@@ -14,6 +20,10 @@ export class BaseSycSyncService {
 
     switch (action) {
       case 'created':
+        await this.validatorService.validate({
+          data: entity,
+          entityClass: repo.entityClass,
+        })
         await repo.create(entity);
         break;
       case 'updated':
@@ -43,7 +53,14 @@ export class BaseSycSyncService {
   }
 
   protected async updateOrCreate({repo, id, entity}: {repo: DefaultCrudRepository<any, any>, id: string, entity: any}) {
-    return await repo.exists(id) ? repo.updateById(id, entity) : repo.create(entity)
+    const exists = await repo.exists(id);
+    await this.validatorService.validate({
+      data: entity,
+      entityClass: repo.entityClass,
+      ...(exists && {options: {partial: true}}),
+    })
+
+    return exists ? repo.updateById(id, entity) : repo.create(entity)
   }
 
 }
