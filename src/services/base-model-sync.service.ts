@@ -2,11 +2,20 @@ import {DefaultCrudRepository, EntityNotFoundError} from '@loopback/repository';
 import {Message} from 'amqplib';
 import {ValidatorService} from './validator.service';
 
-interface SyncOptions {
+export interface SyncOptions {
   repo: DefaultCrudRepository<any, any>;
   data: any;
   message: Message
 }
+
+export interface SyncRelationOptions {
+  id: string;
+  relation: string;
+  relationIds: string[];
+  repo: DefaultCrudRepository<any, any>;
+  repoRelation: DefaultCrudRepository<any, any>;
+}
+
 export abstract class BaseSycSyncService {
 
   constructor(public validatorService: ValidatorService) {
@@ -16,6 +25,7 @@ export abstract class BaseSycSyncService {
   protected async sync({repo, data, message}: SyncOptions) {
     const action = this.getAction(message);
     const entity = this.createEntity(data, repo);
+
     console.log("[ENTITY]", entity);
 
     switch (action) {
@@ -63,21 +73,10 @@ export abstract class BaseSycSyncService {
     return exists ? repo.updateById(id, entity) : repo.create(entity)
   }
 
-  async syncRelations({id, relation, relationIds, repo, repoRelation, message}: {
-    id: string;
-    relation: string;
-    relationIds: string[];
-    repo: DefaultCrudRepository<any, any>;
-    repoRelation: DefaultCrudRepository<any, any>;
-    message: Message;
-  }) {
+  async syncRelations({id, relation, relationIds, repo, repoRelation}: SyncRelationOptions) {
     console.log('[props]', repo.modelClass.definition.properties[relation].jsonSchema.items.properties);
-    const fieldsRelation = Object
-      .keys(repo.modelClass.definition.properties[relation].jsonSchema.items.properties)
-      .reduce((acc, field) => {
-        acc[field] = true;
-        return acc;
-      }, {});
+
+    const fieldsRelation = this.extractFiledsRelation(repo, relation);
     console.log('[fieldsRelation]', fieldsRelation)
 
     const collection = await repoRelation.find({
@@ -95,6 +94,14 @@ export abstract class BaseSycSyncService {
     }
 
     await repo.updateById(id, {[relation]: collection});
+  }
+  extractFiledsRelation(repo: DefaultCrudRepository<any, any>, relation: string) {
+    return Object
+      .keys(repo.modelClass.definition.properties[relation].jsonSchema.items.properties)
+      .reduce((acc, field) => {
+        acc[field] = true;
+        return acc;
+      }, {});
   }
 
 }
