@@ -74,10 +74,10 @@ export abstract class BaseSycSyncService {
   }
 
   async syncRelations({id, relation, relationIds, repo, repoRelation}: SyncRelationOptions) {
-    console.log('[props]', repo.modelClass.definition.properties[relation].jsonSchema.items.properties);
+    // console.log('[props]', repo.modelClass.definition.properties[relation].jsonSchema.items.properties);
 
     const fieldsRelation = this.extractFiledsRelation(repo, relation);
-    console.log('[fieldsRelation]', fieldsRelation)
+    // console.log('[fieldsRelation]', fieldsRelation)
 
     const collection = await repoRelation.find({
       fields: fieldsRelation,
@@ -86,14 +86,16 @@ export abstract class BaseSycSyncService {
       },
     });
 
-    console.log('[collection]', collection)
+    // console.log('[collection]', collection)
     if (!collection.length) {
       const error = new EntityNotFoundError(repoRelation.entityClass, relationIds);
       error.name = 'EntityNotFound';
       throw error;
     }
 
-    await repo.updateById(id, {[relation]: collection});
+    await (repo as any).attachCategories(id, collection);
+
+    // await repo.updateById(id, {[relation]: collection});
   }
   extractFiledsRelation(repo: DefaultCrudRepository<any, any>, relation: string) {
     return Object
