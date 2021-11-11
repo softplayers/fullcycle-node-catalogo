@@ -7,6 +7,7 @@ import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {RestExplorerComponent, ValidatorsComponent} from './components';
 import {Category} from './models';
+import {GenreRepository} from './repositories/genre.repository';
 import {MySequence} from './sequence';
 import {RabbitmqServer} from './servers';
 import {ValidatorService} from './services/validator.service';
@@ -54,6 +55,14 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
 
   async boot() {
     await super.boot();
+
+    // Test Update category in genre
+    const genreRepo = this.getSync<GenreRepository>('repositories.GenreRepository');
+    genreRepo.updateCategories({
+      id: '1',
+      name: 'Categoria 1',
+      is_active: true
+    })
     return;
 
     const validator = this.getSync<ValidatorService>('services.ValidatorService');
