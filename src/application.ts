@@ -7,6 +7,8 @@ import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {RestExplorerComponent, ValidatorsComponent} from './components';
 import {Category} from './models';
+import {UpdateCategoryRelationObserver} from './observers';
+import {CategoryRepository} from './repositories';
 import {GenreRepository} from './repositories/genre.repository';
 import {MySequence} from './sequence';
 import {RabbitmqServer} from './servers';
@@ -34,10 +36,12 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
     this.configure(RestExplorerBindings.COMPONENT).to({
       path: '/explorer',
     });
+
     this.component(RestExplorerComponent);
 
     this.component(ValidatorsComponent);
 
+    this.lifeCycleObserver(UpdateCategoryRelationObserver);
 
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here
@@ -63,6 +67,13 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
       name: 'Categoria 1',
       is_active: true
     })
+
+    const catRepo = this.getSync<CategoryRepository>('repositories.CategoryRepository');
+    const cats = await catRepo.find({where: {id: '1-cat'}});
+    const cat = cats[0]
+    console.log('[BOOT]', cat);
+    catRepo.updateById(cat.id, {...cat, name: 'Funcionando no Loopback'});
+
     return;
 
     const validator = this.getSync<ValidatorService>('services.ValidatorService');

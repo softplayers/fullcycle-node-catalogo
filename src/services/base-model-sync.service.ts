@@ -10,10 +10,11 @@ export interface SyncOptions {
 
 export interface SyncRelationOptions {
   id: string;
-  relation: string;
-  relationIds: string[];
   repo: DefaultCrudRepository<any, any>;
-  repoRelation: DefaultCrudRepository<any, any>;
+  relationName: string;
+  relationIds: string[];
+  relationRepo: DefaultCrudRepository<any, any>;
+  message: Message;
 }
 
 export abstract class BaseSycSyncService {
@@ -25,8 +26,6 @@ export abstract class BaseSycSyncService {
   protected async sync({repo, data, message}: SyncOptions) {
     const action = this.getAction(message);
     const entity = this.createEntity(data, repo);
-
-    console.log("[ENTITY]", entity);
 
     switch (action) {
       case 'created':
@@ -73,30 +72,36 @@ export abstract class BaseSycSyncService {
     return exists ? repo.updateById(id, entity) : repo.create(entity)
   }
 
-  async syncRelations({id, relation, relationIds, repo, repoRelation}: SyncRelationOptions) {
-    // console.log('[props]', repo.modelClass.definition.properties[relation].jsonSchema.items.properties);
+  async syncRelations({
+    id,
+    repo,
+    relationName,
+    relationIds,
+    relationRepo,
+    message,
+  }: SyncRelationOptions) {
 
-    const fieldsRelation = this.extractFiledsRelation(repo, relation);
-    // console.log('[fieldsRelation]', fieldsRelation)
+    const fieldsRelation = this.extractFiledsRelation(repo, relationName);
 
-    const collection = await repoRelation.find({
+    const collection = await relationRepo.find({
       fields: fieldsRelation,
       where: {
         or: relationIds.map(idRelation => ({id: idRelation})),
       },
     });
 
-    // console.log('[collection]', collection)
     if (!collection.length) {
-      const error = new EntityNotFoundError(repoRelation.entityClass, relationIds);
+      const error = new EntityNotFoundError(relationRepo.entityClass, relationIds);
       error.name = 'EntityNotFound';
       throw error;
     }
 
-    await (repo as any).attachCategories(id, collection);
-
-    // await repo.updateById(id, {[relation]: collection});
+    const action = this.getAction(message);
+    if (action == 'attached') {
+      await (repo as any).attachCategories(id, collection);
+    }
   }
+
   extractFiledsRelation(repo: DefaultCrudRepository<any, any>, relation: string) {
     return Object
       .keys(repo.modelClass.definition.properties[relation].jsonSchema.items.properties)

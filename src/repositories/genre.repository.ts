@@ -41,16 +41,24 @@ export class GenreRepository extends DefaultCrudRepository<
         },
       }
     }
-    console.log('[Genre] attachCategories - before', document)
-
     const db: Client = this.dataSource.connector?.db;
 
     await db.update_by_query(document);
-    console.log('[Genre] attachCategories - after')
   }
 
 
   async updateCategories(data: object) {
+
+    const fields = Object.keys(this.modelClass.definition.properties['categories'].jsonSchema.items.properties);
+
+    // lodash.pick(data, fields)
+    const category = fields.reduce((acc, key) => {
+      if (data.hasOwnProperty(key)) {
+        acc[key] = data[key];
+      }
+      return acc;
+    }, {} as any);
+
     const document = {
       index: this.dataSource.settings.index,
       refresh: true,
@@ -60,7 +68,7 @@ export class GenreRepository extends DefaultCrudRepository<
             path: "categories",
             query: {
               term: {
-                "categories.id": "2"
+                "categories.id": "1-cat"
               }
             }
           }
@@ -71,15 +79,14 @@ export class GenreRepository extends DefaultCrudRepository<
             ctx._source['categories'].add(params['category']);
           `,
           params: {
-            category: data,
+            category,
           }
         },
       }
     }
-    console.log('[Genre] updateCategories - before', document)
+
     const db: Client = this.dataSource.connector?.db;
 
     await db.update_by_query(document);
-    console.log('[Genre] updateCategories - after')
   }
 }

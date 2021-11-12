@@ -123,7 +123,7 @@ export class RabbitmqServer extends Context implements Server {
     return bindings.map(binding => {
       const serviceProto = binding.valueConstructor?.prototype;
       const metadata = MetadataInspector.getAllMethodMetadata<RabbitmqSubscribeMetadata>(RABBITMQ_SUBSCRIBE_DECORATOR, serviceProto);
-      console.log('[Metadata]', metadata)
+      //console.log('[Metadata]', metadata)
       if (!metadata) {
         return [];
       }

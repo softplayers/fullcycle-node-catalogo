@@ -34,13 +34,14 @@ export class GenreSyncService extends BaseSycSyncService {
     routingKey: 'model.genre_categories.*',
     queue: 'micro-catalog/sync-videos/genre_categories',
   })
-  async handlerCategories({data}: {data: any}) {
+  async handlerCategories({data, message}: {data: any, message: Message}) {
     await this.syncRelations({
       id: data.id,
-      relation: "categories",
-      relationIds: data.relation_ids,
       repo: this.genreRepo,
-      repoRelation: this.categoryRepo
+      relationName: "categories",
+      relationIds: data.relation_ids,
+      relationRepo: this.categoryRepo,
+      message,
     })
   }
 }

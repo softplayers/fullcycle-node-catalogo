@@ -1,4 +1,3 @@
-import {getModelSchemaRef} from '@loopback/openapi-v3';
 import {Entity, model, property} from '@loopback/repository';
 import {SmallCategory} from '.';
 
@@ -74,6 +73,3 @@ export interface GenreRelations {
 }
 
 export type GenreWithRelations = Genre & GenreRelations;
-console.log('#####################################');
-console.dir(getModelSchemaRef(Genre), {depth: 8});
-console.log('#####################################');
