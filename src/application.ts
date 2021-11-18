@@ -5,9 +5,8 @@ import {RestComponent, RestServer} from '@loopback/rest';
 import {RestExplorerBindings} from '@loopback/rest-explorer';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
-import {RestExplorerComponent, ValidatorsComponent} from './components';
+import {EntityComponent, RestExplorerComponent, ValidatorsComponent} from './components';
 import {Category} from './models';
-import {UpdateCategoryRelationObserver} from './observers';
 import {CategoryRepository} from './repositories';
 import {GenreRepository} from './repositories/genre.repository';
 import {MySequence} from './sequence';
@@ -38,10 +37,9 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
     });
 
     this.component(RestExplorerComponent);
-
     this.component(ValidatorsComponent);
+    this.component(EntityComponent);
 
-    this.lifeCycleObserver(UpdateCategoryRelationObserver);
 
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here
@@ -62,9 +60,9 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
 
     // Test Update category in genre
     const genreRepo = this.getSync<GenreRepository>('repositories.GenreRepository');
-    genreRepo.updateCategories({
+    genreRepo.updateRelation('categories', {
       id: '1',
-      name: 'Categoria 1',
+      name: 'Categoria 3333333333333333333333333333333333',
       is_active: true
     })
 

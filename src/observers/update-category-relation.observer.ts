@@ -15,7 +15,7 @@ export class UpdateCategoryRelationObserver implements LifeCycleObserver {
   constructor(
     @repository(CategoryRepository) private categoryRepo: CategoryRepository,
     @repository(GenreRepository) private genreRepo: GenreRepository,
-  ) {}
+  ) { }
 
   /**
    * This method will be invoked when the application initializes. It will be
@@ -36,7 +36,7 @@ export class UpdateCategoryRelationObserver implements LifeCycleObserver {
           return;
         }
 
-        await this.genreRepo.updateCategories(data);
+        await this.genreRepo.updateRelation('categories', data);
       }
     );
   }
