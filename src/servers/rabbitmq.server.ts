@@ -70,9 +70,20 @@ export class RabbitmqServer extends Context implements Server {
     })
     this._channelManager.on('error', (err, {name}) => {
       this._listening = false;
-      console.log(`Failed to setup a RabbitMQ channel - name: {name}`);
+      console.log(`Failed to setup a RabbitMQ channel - name: ${name} | error: ${err.message}`);
     })
     await this.setupExchanges();
+    await this.channelManager.addSetup(async (channel: ConfirmChannel) => {
+      const assertExchange = await channel.assertExchange('dlx.amq.topic', 'topic');
+      const assertQueue = await channel.assertQueue(
+        'dlx.sync-videos',
+        {
+          deadLetterExchange: 'amq.topic',
+          messageTtl: 20000
+        },
+      );
+      channel.bindQueue(assertQueue.queue, assertExchange.exchange, 'model.category.*');
+    });
     await this.bindSubscribers();
   }
 
@@ -181,7 +192,7 @@ export class RabbitmqServer extends Context implements Server {
   }
 
   private dispatchResponse(channel: Channel, message: Message, responseType?: ResponseEnum) {
-    switch(responseType) {
+    switch (responseType) {
       case ResponseEnum.REQUEUE:
         channel.nack(message, false, true);
         break;

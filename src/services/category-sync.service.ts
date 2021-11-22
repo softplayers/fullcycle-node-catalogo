@@ -17,12 +17,22 @@ export class CategorySyncService extends BaseSycSyncService {
   }
 
 
+
   @rabbitmqSubscribe({
     exchange: 'amq.topic',
     routingKey: 'model.category.*',
     queue: 'micro-catalog/sync-videos/category',
+    queueOptions: {
+      deadLetterExchange: 'dlx.amq.topic'
+    }
   })
   async handler({data, message}: {data: any, message: Message}) {
+
+    /*
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    return ResponseEnum.NACK;
+    */
+
     await this.sync({
       repo: this.categoryRepo,
       data,
