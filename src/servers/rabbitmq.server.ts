@@ -37,13 +37,25 @@ export enum ResponseEnum {
 }
 
 export interface Exchange {
-  name: string; type: string; options?: Options.AssertExchange
+  name: string;
+  type: string;
+  options?: Options.AssertExchange
+}
+
+export interface Queue {
+  name: string;
+  options?: Options.AssertQueue;
+  exchange?: {
+    name: string;
+    routingKey: string;
+  }
 }
 
 export interface RabbitmqConfig {
   uri: string;
   connOptions?: AmqpConnectionManagerOptions;
   exchanges?: Exchange[];
+  queues?: Queue[]
   defaultHandleError?: ResponseEnum;
 }
 
@@ -73,17 +85,7 @@ export class RabbitmqServer extends Context implements Server {
       console.log(`Failed to setup a RabbitMQ channel - name: ${name} | error: ${err.message}`);
     })
     await this.setupExchanges();
-    await this.channelManager.addSetup(async (channel: ConfirmChannel) => {
-      const assertExchange = await channel.assertExchange('dlx.amq.topic', 'topic');
-      const assertQueue = await channel.assertQueue(
-        'dlx.sync-videos',
-        {
-          deadLetterExchange: 'amq.topic',
-          messageTtl: 20000
-        },
-      );
-      channel.bindQueue(assertQueue.queue, assertExchange.exchange, 'model.category.*');
-    });
+    await this.setupQueues();
     await this.bindSubscribers();
   }
 
@@ -95,8 +97,31 @@ export class RabbitmqServer extends Context implements Server {
         return;
       }
 
-      Promise.all(exchanges.map((exchange) =>
+      await Promise.all(exchanges.map((exchange) =>
         channel.assertExchange(exchange.name, exchange.type, exchange.options)
+      ))
+    });
+  }
+
+  private async setupQueues() {
+    const {queues} = this.config;
+
+    return this.channelManager.addSetup(async (channel: ConfirmChannel) => {
+      if (!queues) {
+        return;
+      }
+
+      await Promise.all(queues.map(async (queue) => {
+          await channel.assertQueue(queue.name, queue.options);
+          if (!queue.exchange) {
+            return;
+          }
+          await channel.bindQueue(
+            queue.name,
+            queue.exchange.name,
+            queue.exchange.routingKey
+          );
+        }
       ))
     });
   }
