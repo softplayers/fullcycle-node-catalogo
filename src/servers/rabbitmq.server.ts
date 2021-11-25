@@ -59,6 +59,13 @@ export interface RabbitmqConfig {
   defaultHandleError?: ResponseEnum;
 }
 
+export interface ExceededInput {
+  channel: Channel;
+  message: Message;
+}
+
+export const MAX_ATTEMPTS = 2;
+
 export class RabbitmqServer extends Context implements Server {
   private _listening: boolean;
   private _conn: AmqpConnectionManager;
@@ -71,7 +78,9 @@ export class RabbitmqServer extends Context implements Server {
     @repository(CategoryRepository) private categoryRepo: CategoryRepository) {
     super(app);
     console.log('[config]', config);
-  }
+  };
+
+
 
   async start(): Promise<void> {
     this._conn = connect([this.config.uri], this.config.connOptions);
@@ -112,16 +121,16 @@ export class RabbitmqServer extends Context implements Server {
       }
 
       await Promise.all(queues.map(async (queue) => {
-          await channel.assertQueue(queue.name, queue.options);
-          if (!queue.exchange) {
-            return;
-          }
-          await channel.bindQueue(
-            queue.name,
-            queue.exchange.name,
-            queue.exchange.routingKey
-          );
+        await channel.assertQueue(queue.name, queue.options);
+        if (!queue.exchange) {
+          return;
         }
+        await channel.bindQueue(
+          queue.name,
+          queue.exchange.name,
+          queue.exchange.routingKey
+        );
+      }
       ))
     });
   }
@@ -207,7 +216,10 @@ export class RabbitmqServer extends Context implements Server {
           this.dispatchResponse(channel, message, responseType);
         }
       } catch (error) {
-        console.error(error);
+        console.error(error, {
+          routingKey: message?.fields.routingKey,
+          content: message?.content.toString()
+        });
         if (!message) {
           return;
         }
@@ -222,11 +234,23 @@ export class RabbitmqServer extends Context implements Server {
         channel.nack(message, false, true);
         break;
       case ResponseEnum.NACK:
-        channel.nack(message, false, false);
+        this.handleNack({channel, message});
         break;
       case ResponseEnum.ACK:
       default:
         channel.ack(message);
+    }
+  }
+
+  handleNack({channel, message}: ExceededInput) {
+    const canDeadLetter = this.canDeadLetter({channel, message});
+    if (canDeadLetter) {
+      console.log(`Nack in message`, {
+        content: message.content.toString()
+      });
+      channel.nack(message, false, false);
+    } else {
+      channel.ack(message);
     }
   }
 
@@ -248,6 +272,19 @@ export class RabbitmqServer extends Context implements Server {
           break;
       }
     }
+  }
+
+  canDeadLetter({channel, message}: ExceededInput) {
+    if (message.properties.headers && 'x-death' in message.properties.headers) {
+      const count = message.properties.headers['x-death']![0].count;
+      if (count >= MAX_ATTEMPTS) {
+        channel.ack(message);
+        const queue = message.properties.headers['x-death']![0].queue ?? '';
+        console.error(`Ack in ${queue} with error. Max attempts exceeded: ${MAX_ATTEMPTS}`);
+        return false;
+      }
+    }
+    return true;
   }
 
   async stop(): Promise<void> {

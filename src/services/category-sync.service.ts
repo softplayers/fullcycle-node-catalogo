@@ -3,6 +3,7 @@ import {repository} from '@loopback/repository';
 import {Message} from 'amqplib';
 import {rabbitmqSubscribe} from '../decorators/rabbitmq-subscribe.decorator';
 import {CategoryRepository} from '../repositories';
+import {ResponseEnum} from '../servers';
 import {BaseSycSyncService} from './base-model-sync.service';
 import {ValidatorService} from './validator.service';
 
@@ -32,6 +33,8 @@ export class CategorySyncService extends BaseSycSyncService {
     await new Promise(resolve => setTimeout(resolve, 10000));
     return ResponseEnum.NACK;
     */
+
+    return ResponseEnum.NACK;
 
     await this.sync({
       repo: this.categoryRepo,
