@@ -57,6 +57,7 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
 
   async boot() {
     await super.boot();
+    return;
 
     // Test Update category in genre
     const genreRepo = this.getSync<GenreRepository>('repositories.GenreRepository');

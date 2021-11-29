@@ -64,7 +64,7 @@ export interface ExceededInput {
   message: Message;
 }
 
-export const MAX_ATTEMPTS = 2;
+export const MAX_ATTEMPTS = 3;
 
 export class RabbitmqServer extends Context implements Server {
   private _listening: boolean;

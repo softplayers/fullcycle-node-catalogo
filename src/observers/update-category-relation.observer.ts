@@ -29,9 +29,11 @@ export class UpdateCategoryRelationObserver implements LifeCycleObserver {
    * This method will be invoked when the application starts.
    */
   async start(): Promise<void> {
+    console.log('[UpdateObserver] start')
     this.categoryRepo.modelClass.observe(
       'after save',
       async ({where, data, isNewInstance, ...other}) => {
+        console.log('[UpdateObserver] ... callback')
         if (isNewInstance) {
           return;
         }
@@ -45,6 +47,7 @@ export class UpdateCategoryRelationObserver implements LifeCycleObserver {
    * This method will be invoked when the application stops.
    */
   async stop(): Promise<void> {
+    console.log('[UpdateObserver] stop')
     // Add your logic for stop
   }
 }
