@@ -100,6 +100,9 @@ export abstract class BaseSycSyncService {
     if (action == 'attached') {
       await (repo as any).attachRelation(id, relationName, collection);
     }
+    else {
+      console.warn('[syncRelations] unknown action:', action)
+    }
   }
 
   extractFiledsRelation(repo: DefaultCrudRepository<any, any>, relation: string) {

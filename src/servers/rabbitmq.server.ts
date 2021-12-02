@@ -56,7 +56,7 @@ export interface RabbitmqConfig {
   connOptions?: AmqpConnectionManagerOptions;
   exchanges?: Exchange[];
   queues?: Queue[]
-  defaultHandleError?: ResponseEnum;
+  defaultHandlerError?: ResponseEnum;
 }
 
 export interface ExceededInput {
@@ -216,14 +216,14 @@ export class RabbitmqServer extends Context implements Server {
           this.dispatchResponse(channel, message, responseType);
         }
       } catch (error) {
-        console.error(error, {
+        console.error('[consume::error]', error, {
           routingKey: message?.fields.routingKey,
           content: message?.content.toString()
         });
         if (!message) {
           return;
         }
-        this.dispatchResponse(channel, message, this.config?.defaultHandleError);
+        this.dispatchResponse(channel, message, this.config?.defaultHandlerError);
       }
     });
   }
