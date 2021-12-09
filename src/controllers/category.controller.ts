@@ -12,12 +12,13 @@ import {
 } from '@loopback/rest';
 import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
+import {PaginatorSerializer} from '../utils/paginator';
 
 export class CategoryController {
   constructor(
     @repository(CategoryRepository)
-    public categoryRepository : CategoryRepository,
-  ) {}
+    public categoryRepository: CategoryRepository,
+  ) { }
 
   @get('/categories/count')
   @response(200, {
@@ -44,8 +45,8 @@ export class CategoryController {
   })
   async find(
     @param.filter(Category) filter?: Filter<Category>,
-  ): Promise<Category[]> {
-    return this.categoryRepository.find(filter);
+  ): Promise<PaginatorSerializer<Category>> {
+    return this.categoryRepository.paginate(filter);
   }
 
   @get('/categories/{id}')

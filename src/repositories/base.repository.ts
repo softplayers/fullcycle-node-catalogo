@@ -1,7 +1,18 @@
-import {DefaultCrudRepository, Entity} from '@loopback/repository';
+import {DefaultCrudRepository, Entity, Filter, Options} from '@loopback/repository';
 import {Client} from 'loopback-connector-esv6';
+import {PaginatorSerializer} from '../utils/paginator';
 
 export class BaseRepository<T extends Entity, ID, Relations extends object = {}> extends DefaultCrudRepository<T, ID, Relations> {
+
+  async paginate(filter?: Filter<T>, options?: Options) {
+    const paginator = {
+      count: (await this.count(filter?.where, options)).count,
+      results: await this.find(filter, options),
+      limit: filter?.limit ?? this.dataSource.settings.defaultSize,
+      offset: filter?.offset ?? 0
+    }
+    return new PaginatorSerializer<T>(paginator);
+  }
 
   async attachRelation(id: ID, relationName: string, data: object[]) {
     const document = {
