@@ -1,36 +1,49 @@
 import {RequestContext} from '@loopback/rest';
-import {stringify} from 'querystring';
+import {Exclude, Expose, instanceToPlain} from 'class-transformer';
+import {stringify} from 'qs';
 
+
+/*
 export interface Page<T> {
   results: T[];
   count: number;
   limit: number;
   offset: number;
 }
+*/
 
 export class PaginatorSerializer<T> {
 
+  @Exclude()
   public baseUrl: string;
 
-  constructor(public page: Page<T>) { }
+  constructor(
+    public results: T[],
+    public count: number,
+    public limit: number,
+    public offset: number,
+  ) {
+  }
 
-  private get previous_url() {
+  @Expose()
+  get previous_url() {
     let previous: string | null = null;
-    const {offset, count, limit} = this.page;
+    const {offset, count, limit} = this;
     if (offset > 0 && count) {
       previous = `${this.baseUrl}?${stringify({
         filter: {
           limit,
-          ...(offset - limit >= 0 && {offset: offset})
+          ...(offset - limit >= 0 && {offset: offset - limit})
         }
       })}`;
     }
     return previous;
   }
 
-  private get next_url() {
+  @Expose()
+  get next_url() {
     let next: string | null = null;
-    const {offset, limit, count} = this.page;
+    const {offset, limit, count} = this;
     if (offset + limit < count) {
       next = `${this.baseUrl}?${stringify({
         filter: {
@@ -43,6 +56,12 @@ export class PaginatorSerializer<T> {
   }
 
   toJson(req: RequestContext) {
+    this.baseUrl = `${req.requestedBaseUrl}${req.request.path}`;
+    return instanceToPlain(this);
+  }
+
+  /*
+  toJson(req: RequestContext) {
     this.baseUrl = `${req.requestedBaseUrl}${req.request.url}`;
     return {
       ...this.page,
@@ -50,5 +69,6 @@ export class PaginatorSerializer<T> {
       previous_url: this.previous_url
     }
   }
+  */
 
 }
