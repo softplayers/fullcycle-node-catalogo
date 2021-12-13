@@ -1,15 +1,12 @@
 import {
   Count,
   CountSchema,
-  Filter,
-  FilterExcludingWhere,
-  repository,
+  EntityNotFoundError,
+  Filter, repository,
   Where
 } from '@loopback/repository';
-import {
-  get,
-  getModelSchemaRef, param, response
-} from '@loopback/rest';
+import {get, getModelSchemaRef, param, response} from '@loopback/rest';
+import {CategotyFilterBuilder} from '../filters/category.filters';
 import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
 import {PaginatorSerializer} from '../utils/paginator';
@@ -25,9 +22,7 @@ export class CategoryController {
     description: 'Category model count',
     content: {'application/json': {schema: CountSchema}},
   })
-  async count(
-    @param.where(Category) where?: Where<Category>,
-  ): Promise<Count> {
+  async count(@param.where(Category) where?: Where<Category>): Promise<Count> {
     return this.categoryRepository.count(where);
   }
 
@@ -46,7 +41,8 @@ export class CategoryController {
   async find(
     @param.filter(Category) filter?: Filter<Category>,
   ): Promise<PaginatorSerializer<Category>> {
-    return this.categoryRepository.paginate(filter);
+    const newFilter = new CategotyFilterBuilder(filter).build();
+    return this.categoryRepository.paginate(newFilter);
   }
 
   @get('/categories/{id}')
@@ -60,9 +56,15 @@ export class CategoryController {
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(Category, {exclude: 'where'}) filter?: FilterExcludingWhere<Category>
+    @param.filter(Category, {exclude: 'where'}) filter?: Filter<Category>,
   ): Promise<Category> {
-    return this.categoryRepository.findById(id, filter);
+    const newFilter = new CategotyFilterBuilder(filter)
+      .where({id})
+      .build();
+    const category = await this.categoryRepository.findOne(newFilter);
+    if (!category) {
+      throw new EntityNotFoundError(Category, id);
+    }
+    return category;
   }
-
 }
