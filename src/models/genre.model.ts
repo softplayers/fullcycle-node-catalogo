@@ -1,5 +1,5 @@
-import {Entity, model, property} from '@loopback/repository';
-import {SmallCategory} from '.';
+import {Entity, hasMany, model, property} from '@loopback/repository';
+import {Category, SmallCategory} from '.';
 
 @model({settings: {strict: false}})
 export class Genre extends Entity {
@@ -46,6 +46,7 @@ export class Genre extends Entity {
   // Indexer property to allow additional data
   [prop: string]: any;
 
+  @hasMany(() => Category)
   @property({
     type: 'object',
     jsonSchema: {

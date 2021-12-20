@@ -4,7 +4,7 @@ import {DefaultFilter} from './default.filter';
 export class CategotyFilterBuilder extends DefaultFilter<Category> {
 
   protected defaultFilter() {
-    this.isActive();
+    return this.isActive(Category);
   }
 
 }
