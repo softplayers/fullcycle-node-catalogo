@@ -9,11 +9,35 @@ const config = {
   debug: 'dev', // process.env.APP_ENV === 'dev',
   defaultSize: 50,
   configuration: {
-    node: 'http://elasticsearch:9200',
-    // node: 'http://localhost:9200',
+    // node: 'http://elasticsearch:9200',
+    node: 'http://localhost:9200',
     // node: process.env.ELASTIC_SEARCH_HOST,
     requestTimeout: 30000, //parseInt(process.env.ELASTIC_SEARCH_REQUEST_TIMEOUT as string),
     pingTimeout: 3000, // parseInt(process.env.ELASTIC_SEARCH_PING_TIMEOUT as string),
+  },
+  indexSettings: {
+    max_ngram_diff: 7,
+    analysis: {
+      analyzer: {
+        ngram_token_analyzer: {
+          type: 'custom',
+          stopwords: '_none_',
+          filter: ['lowercase', 'asciifolding', 'no_stop', 'ngram_filter'],
+          tokenizer: 'whitespace',
+        }
+      },
+      filter: {
+        no_stop: {
+          type: 'stop',
+          stopwords: '_none_',
+        },
+        ngram_filter: {
+          type: 'nGram',
+          min_gram: '2',
+          max_gram: '9',
+        }
+      }
+    }
   },
   mappingProperties: {
     "docType": {
@@ -24,6 +48,7 @@ const config = {
     },
     "name": {
       "type": "text",
+      "analyzer": 'ngram_token_analyzer',
       "fields": {
         "keyword": {
           "type": "keyword",
@@ -33,6 +58,7 @@ const config = {
     },
     "description": {
       "type": "text",
+      "analyzer": 'ngram_token_analyzer',
     },
     "created_at": {
       "type": "date"
