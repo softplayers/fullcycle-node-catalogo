@@ -2,13 +2,13 @@ import {AnyObject, Filter, FilterBuilder, JsonSchema, Model, Where, WhereBuilder
 import {getJsonSchema} from '@loopback/rest';
 
 export abstract class DefaultFilter<MT extends object = AnyObject> extends FilterBuilder<MT> {
-  dFilter: Filter<MT> | null;
+  defaultWhere: Where<MT> | null | undefined;
 
   constructor(f?: Filter<MT>) {
     super(f);
-    const dFilter = this.defaultFilter();
-    this.dFilter = dFilter ? JSON.parse(JSON.stringify(dFilter)) : null;
-    this.filter = {};
+    const defaultWhere = this.defaultFilter();
+    this.defaultWhere = defaultWhere ? JSON.parse(JSON.stringify(defaultWhere.filter.where)) : null;
+    this.filter.where = {};
   }
 
   // protected defaultFilter(): DefaultFilter<MT> | null { return null; }
@@ -39,7 +39,7 @@ export abstract class DefaultFilter<MT extends object = AnyObject> extends Filte
         return false;
       }
 
-      const properties = jsonSchema.properties || jsonSchema?.items?.['properties'];
+      const properties = jsonSchema.properties ?? jsonSchema?.items?.['properties'];
       return Object.keys(properties).includes('is_active');
     });
 
@@ -63,6 +63,6 @@ export abstract class DefaultFilter<MT extends object = AnyObject> extends Filte
   }
 
   build() {
-    return this.dFilter ? this.impose(this.dFilter).filter : this.filter;
+    return this.defaultWhere ? this.impose(this.defaultWhere).filter : this.filter;
   }
 }

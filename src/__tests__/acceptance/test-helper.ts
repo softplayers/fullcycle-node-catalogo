@@ -1,8 +1,9 @@
 import {
-  Client, createRestAppClient,
-  givenHttpServerConfig
+  Client, givenHttpServerConfig
 } from '@loopback/testlab';
+import supertest from 'supertest';
 import {FullcycleNodeCatalogoApplication} from '../..';
+import config from '../../../config';
 
 export async function setupApplication(): Promise<AppWithClient> {
   const restConfig = givenHttpServerConfig({
@@ -11,17 +12,18 @@ export async function setupApplication(): Promise<AppWithClient> {
     //
     // host: process.env.HOST,
     // port: +process.env.PORT,
+    port: 9005
   });
 
   const app = new FullcycleNodeCatalogoApplication({
+    ...config,
     rest: restConfig,
   });
 
   await app.boot();
   await app.start();
 
-  // @ts-ignore
-  const client = createRestAppClient(app);
+  const client = supertest('http://127.0.0.1:9005');
 
   return {app, client};
 }

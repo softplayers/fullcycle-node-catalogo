@@ -53,7 +53,7 @@ export abstract class BaseSycSyncService {
 
   protected createEntity(data: any, repo: DefaultCrudRepository<any, any>) {
     return Object.keys(repo.entityClass.definition.properties).reduce((acc, key) => {
-      if (data.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
         acc[key] = data[key];
       }
 
@@ -97,7 +97,7 @@ export abstract class BaseSycSyncService {
     }
 
     const action = this.getAction(message);
-    if (action == 'attached') {
+    if (action === 'attached') {
       await (repo as any).attachRelation(id, relationName, collection);
     }
     else {

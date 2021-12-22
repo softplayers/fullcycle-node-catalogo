@@ -51,7 +51,7 @@ export class BaseRepository<T extends Entity, ID, Relations extends object = {}>
 
     // lodash.pick(data, fields)
     const relation = fields.reduce((acc, key) => {
-      if (data.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
         acc[key] = data[key];
       }
       return acc;

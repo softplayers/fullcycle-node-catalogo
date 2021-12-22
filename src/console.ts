@@ -24,8 +24,8 @@ function showAvailablesCommands() {
   console.log(chalk.green("Available Commands: \n\n"));
 
   for (const c in commands) {
-    const command = COMMANDS[c];
-    console.log(chalk.green(`- ${command?.command} - ${command?.description}`));
+    const comm = COMMANDS[c];
+    console.log(chalk.green(`- ${comm?.command} - ${comm?.description}`));
   }
 
   console.log("\n");

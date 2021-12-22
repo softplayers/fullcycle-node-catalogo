@@ -6,13 +6,9 @@ import {RestExplorerBindings} from '@loopback/rest-explorer';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {EntityComponent, RestExplorerComponent, ValidatorsComponent} from './components';
-import {Category} from './models';
 import {ApiResourceProvider} from './providers/api-resource.providers';
-import {CategoryRepository} from './repositories';
-import {GenreRepository} from './repositories/genre.repository';
 import {MySequence} from './sequence';
 import {RabbitmqServer} from './servers';
-import {ValidatorService} from './services/validator.service';
 
 export {ApplicationConfig};
 
@@ -60,10 +56,9 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
 
   async boot() {
     await super.boot();
-    return;
 
     // Test Update category in genre
-    const genreRepo = this.getSync<GenreRepository>('repositories.GenreRepository');
+    /* const genreRepo = this.getSync<GenreRepository>('repositories.GenreRepository');
     genreRepo.updateRelation('categories', {
       id: '1',
       name: 'Categoria 3333333333333333333333333333333333',
@@ -77,14 +72,18 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
     catRepo.updateById(cat.id, {...cat, name: 'Funcionando no Loopback'});
 
     return;
+    */
 
-    const validator = this.getSync<ValidatorService>('services.ValidatorService');
+    // Test 2
+    /* const validator = this.getSync<ValidatorService>('services.ValidatorService');
     try {
       await validator.validate({data: {id: '2-cat2'}, entityClass: Category});
     } catch (error) {
       console.dir(error, {depth: 8})
     }
+    */
 
+    // Test 3
     /*
     try {
       await validator.validate({data: {}, entityClass: Genre});
