@@ -30,5 +30,9 @@ module.exports = {
         },
       }
     ],
+  },
+  jwt: {
+    secret: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuoyalHCjvRJPCbZf+m1w+cko2lITMZnPjJa/Ctg9lQDJPSuaIjaDJIgokJeXfGsHPI7x6ib14yDgbHdusF8/xm9zQXFnYzHjOnAjBbMAM37n7F1A5tnz0AY5UIf273vNFHLWW0witRMTPOwCqRTsLOnBdpleCbrkbY0pGLapoZPF28+9mKizgIdbgihqNBK+ho0vYG26VzqKHsz5VLHPyWfX8lrglzc940Tf+NOVMlBeycYREL174imQF50ZlftrQYacThXTiUdVtJcsoE7QL935j7gwVchH/YMouK/Ldch9BUsI3euOKWX4o4kbYHzn4cEloV4smGeq1LXfCcbrnwIDAQAB\n-----END PUBLIC KEY-----",
+    _algorithms: ["RS256"]
   }
 };

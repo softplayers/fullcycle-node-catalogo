@@ -1,3 +1,5 @@
+import {AuthenticationComponent} from '@loopback/authentication';
+import {JWTAuthenticationComponent, TokenServiceBindings} from '@loopback/authentication-jwt';
 import {BootMixin} from '@loopback/boot';
 import {Application, ApplicationConfig} from '@loopback/core';
 import {RepositoryMixin} from '@loopback/repository';
@@ -9,6 +11,7 @@ import {EntityComponent, RestExplorerComponent, ValidatorsComponent} from './com
 import {ApiResourceProvider} from './providers/api-resource.providers';
 import {MySequence} from './sequence';
 import {RabbitmqServer} from './servers';
+import {JWTService} from './services/auth/jwt.service';
 
 export {ApplicationConfig};
 
@@ -38,6 +41,9 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
     this.component(RestExplorerComponent);
     this.component(ValidatorsComponent);
     this.component(EntityComponent);
+    this.component(AuthenticationComponent);
+    this.component(JWTAuthenticationComponent);
+    this.bind(TokenServiceBindings.TOKEN_SERVICE).toClass(JWTService);
 
 
     this.projectRoot = __dirname;
@@ -50,7 +56,6 @@ export class FullcycleNodeCatalogoApplication extends BootMixin(
         nested: true,
       },
     };
-
     this.server(RabbitmqServer)
   }
 
